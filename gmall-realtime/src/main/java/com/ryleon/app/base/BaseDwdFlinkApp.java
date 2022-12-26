@@ -2,11 +2,7 @@ package com.ryleon.app.base;
 
 import cn.hutool.core.util.StrUtil;
 import com.ryleon.util.MyKafkaUtil;
-import org.apache.flink.api.common.restartstrategy.RestartStrategies;
-import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.runtime.state.hashmap.HashMapStateBackend;
-import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
@@ -16,9 +12,15 @@ import java.time.ZoneId;
  * @author ALiang
  * @date 2022-12-23
  */
-public abstract class BaseFlinkApp implements IProcess {
+public abstract class BaseDwdFlinkApp implements IDwdProcess {
+
     @Override
     public void execute(String appName) throws Exception {
+        execute(appName, null);
+    }
+
+    @Override
+    public void execute(String appName, Integer ttl) throws Exception {
         // todo 1.获取执行环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -26,10 +28,12 @@ public abstract class BaseFlinkApp implements IProcess {
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
         // 设定 Table 中的时区为本地时区
         tableEnv.getConfig().setLocalTimeZone(ZoneId.of("GMT+8"));
-        // 获取配置对象
-        Configuration configuration = tableEnv.getConfig().getConfiguration();
-        // 为表关联时状态中存储的数据设置过期时间
-        configuration.setString("table.exec.state.ttl", "5 s");
+        if (ttl != null) {
+            // 获取配置对象
+            Configuration configuration = tableEnv.getConfig().getConfiguration();
+            // 为表关联时状态中存储的数据设置过期时间
+            configuration.setString("table.exec.state.ttl", ttl + " s");
+        }
 
         // 1.2 设置检查点
         // env.enableCheckpointing(5 * 60000L, CheckpointingMode.EXACTLY_ONCE);
@@ -48,7 +52,7 @@ public abstract class BaseFlinkApp implements IProcess {
         process(env, tableEnv);
 
         // todo 3.启动程序
-        env.execute(appName);
+        startEnv(env, appName);
     }
 
     @Override
