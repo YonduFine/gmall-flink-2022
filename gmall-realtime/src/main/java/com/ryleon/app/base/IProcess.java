@@ -7,7 +7,8 @@ import javax.validation.constraints.NotNull;
 
 /**
  * @author ALiang
- * @date 2022-12-23
+ * @date 2022-12-25
+ * @effect 描述该类的作用
  */
 public interface IProcess {
 
@@ -28,14 +29,4 @@ public interface IProcess {
      */
     void process(StreamExecutionEnvironment env, StreamTableEnvironment tableEnv) throws Exception;
 
-    /**
-     * 读取数据
-     * 为后续处理提供数据
-     *
-     * @param env 执行环境
-     * @param tableEnv FlinkSQL执行环境
-     * @param appName 应用程序名称
-     * @throws Exception 异常
-     */
-    void loadData(StreamExecutionEnvironment env, StreamTableEnvironment tableEnv,String appName) throws Exception;
 }
