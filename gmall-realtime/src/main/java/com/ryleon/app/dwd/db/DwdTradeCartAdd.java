@@ -1,6 +1,6 @@
 package com.ryleon.app.dwd.db;
 
-import com.ryleon.app.base.BaseFlinkApp;
+import com.ryleon.app.base.BaseDwdFlinkApp;
 import com.ryleon.util.MyKafkaUtil;
 import com.ryleon.util.MySqlUtil;
 import com.ryleon.util.PropertiesUtil;
@@ -15,12 +15,17 @@ import java.util.Properties;
  * @author ALiang
  * @date 2022-12-23
  * @effect 交易域加购事务事实表
+ *
+ * <p>
+ * 数据：web/app->Ngnix->Mysql->Maxwell->Kafka(ODS)->FlinkApp->Kafka(DWD_trade_cart_add)
+ * <p>
+ * 程序：mock->Maxwell->Kafka(ZK)->DwdTradeCartAdd->Kafka(ZK)
  */
-public class DwdTradeCartAdd extends BaseFlinkApp {
+public class DwdTradeCartAdd extends BaseDwdFlinkApp {
 
     public static void main(String[] args) throws Exception {
-        BaseFlinkApp driver = new DwdTradeCartAdd();
-        driver.execute("DwdTradeCartAdd");
+        BaseDwdFlinkApp driver = new DwdTradeCartAdd();
+        driver.execute("DwdTradeCartAdd", 5);
     }
 
     @Override
@@ -111,6 +116,11 @@ public class DwdTradeCartAdd extends BaseFlinkApp {
         String insertSql = "insert into dwd_cart_add select * from cart_add_dic_detail";
         tableEnv
             .executeSql(insertSql);
-            // .print();
+        // .print();
+    }
+
+    @Override
+    public void startEnv(StreamExecutionEnvironment env, String appName) throws Exception {
+        // env.execute(appName);
     }
 }
