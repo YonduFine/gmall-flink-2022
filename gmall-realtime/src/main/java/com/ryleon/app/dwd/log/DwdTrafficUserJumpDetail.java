@@ -28,6 +28,10 @@ import java.util.Properties;
 
 /**
  * @author Lenovo
+ * <p>
+ * 数据：web/app->Ngnix->日志服务器->.log->Flume->Kafka(ODS)->FlinkApp->Kafka(DWD)->FlinkApp->Kafka(DWD_UJ)
+ * <p>
+ * 程序：mock->Flume->Kafka(ZK)->BaseLogApp->Kafka(ZK)->DwdTrafficUserJumpDetail->Kafka(ZK)
  */
 public class DwdTrafficUserJumpDetail {
     public static void main(String[] args) throws Exception {
