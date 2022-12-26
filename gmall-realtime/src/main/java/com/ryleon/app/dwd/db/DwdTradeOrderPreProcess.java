@@ -1,13 +1,12 @@
 package com.ryleon.app.dwd.db;
 
-import com.ryleon.app.base.BaseFlinkApp;
+import com.ryleon.app.base.BaseDwdFlinkApp;
 import com.ryleon.util.MyKafkaUtil;
 import com.ryleon.util.MySqlUtil;
 import com.ryleon.util.PropertiesUtil;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.types.Row;
 
 import java.util.Properties;
 
@@ -15,12 +14,16 @@ import java.util.Properties;
  * @author ALiang
  * @date 2022-12-24
  * @effect 交易域订单预处理表
+ * <p>
+ * 数据：web/app->Ngnix->Mysql->Maxwell->Kafka(ODS)->FlinkApp->Kafka(DWD_order_pre_Process)
+ * <p>
+ * 程序：mock->Maxwell->Kafka(ZK)->DwdTradeOrderPreProcess->Kafka(ZK)
  */
-public class DwdTradeOrderPreProcess extends BaseFlinkApp {
+public class DwdTradeOrderPreProcess extends BaseDwdFlinkApp {
 
     public static void main(String[] args) throws Exception {
-        BaseFlinkApp driver = new DwdTradeOrderPreProcess();
-        driver.execute("DwdTradeOrderPreProcess");
+        BaseDwdFlinkApp driver = new DwdTradeOrderPreProcess();
+        driver.execute("DwdTradeOrderPreProcess", 5);
     }
 
     @Override
@@ -168,7 +171,8 @@ public class DwdTradeOrderPreProcess extends BaseFlinkApp {
             "    oc.coupon_id,\n" +
             "    oc.coupon_use_id,\n" +
             "    oi.`type`,\n" +
-            "    oi.`old`" +
+            "    oi.`old`," +
+            "    current_row_timestamp() row_op_ts \n" +
             "FROM order_detail_info od \n" +
             "LEFT JOIN order_info oi\n" +
             "ON od.order_id = oi.id\n" +
@@ -229,14 +233,18 @@ public class DwdTradeOrderPreProcess extends BaseFlinkApp {
             "    `coupon_use_id` STRING,\n" +
             "    `type` STRING,\n" +
             "    `old` MAP<STRING,STRING>, \n" +
+            "    row_op_ts TIMESTAMP_LTZ(3), \n" +
             "    PRIMARY KEY (id) NOT ENFORCED\n" +
             ") " + MyKafkaUtil.getFlinkKafkaUpsertSinkDdl(targetTopic);
         tableEnv.executeSql(createOrderPreProcessSql);
 
         // todo 9.将数据写入dwd_trade_order_pre_process
         String insertSql = "INSERT INTO dwd_trade_order_pre_process SELECT * FROM order_pre_process_info";
-        tableEnv
-            .executeSql(insertSql)
-            .print();
+        tableEnv.executeSql(insertSql);
+    }
+
+    @Override
+    public void startEnv(StreamExecutionEnvironment env, String appName) throws Exception {
+        // env.execute(appName);
     }
 }
