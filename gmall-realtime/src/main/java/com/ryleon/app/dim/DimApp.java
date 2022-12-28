@@ -45,7 +45,7 @@ public class DimApp {
 
         // todo 2.读取Kafka topic_db数据，创建主流
         Properties properties = PropertiesUtil.getProperties();
-        String topic = properties.getProperty("dim.kafka.topic.name");
+        String topic = properties.getProperty("ods.kafka.db.topic.name");
         String groupId = properties.getProperty("dim.kafka.group_id.name");
         DataStreamSource<String> kafkaDS = env.addSource(MyKafkaUtil.getFlinkKafkaConsumer(topic, groupId));
 
