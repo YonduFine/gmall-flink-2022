@@ -1,0 +1,63 @@
+package com.ryleon.app.dwd.db;
+
+import cn.hutool.core.util.StrUtil;
+import com.ryleon.app.base.BaseDwdFlinkApp;
+import com.ryleon.util.MyKafkaUtil;
+import com.ryleon.util.PropertiesUtil;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+
+import java.util.Properties;
+
+/**
+ * @author ALiang
+ * @date 2022-12-28
+ * @effect 工具域优惠券领取事务事实表
+ */
+public class DwdToolCouponGet extends BaseDwdFlinkApp {
+
+    public static void main(String[] args) throws Exception {
+        BaseDwdFlinkApp driver = new DwdToolCouponGet();
+        driver.execute("DwdToolCouponGet");
+    }
+
+    @Override
+    public void startEnv(StreamExecutionEnvironment env, String appName) throws Exception {
+
+    }
+
+    @Override
+    public void process(StreamExecutionEnvironment env, StreamTableEnvironment tableEnv) throws Exception {
+        // todo 1.消费Kafka topic_db数据并创建flink-sql-table topic_db
+        // todo 2.过滤coupon_use表中的新增数据 type='insert'
+        String filterCouponGetSql = "SELECT\n" +
+            "    `data`['id'] id,\n" +
+            "    `data`['coupon_id'] coupon_id,\n" +
+            "    `data`['user_id'] user_id,\n" +
+            "    `data`['get_time'] get_time,\n" +
+            "    `ts`\n" +
+            "FROM topic_db\n" +
+            "WHERE `database`='gmall'\n" +
+            "AND `table`='coupon_use'\n" +
+            "AND `type`='insert'";
+        Table filterCouponGetTable = tableEnv.sqlQuery(filterCouponGetSql);
+        tableEnv.createTemporaryView("result_table", filterCouponGetTable);
+
+        // todo 3.创建kafka-connector 表
+        Properties properties = PropertiesUtil.getProperties();
+        String targetTopic = properties.getProperty("dwd.kafka.tool_coupon_get.topic");
+        String createSql = "CREATE TABLE IF NOT EXISTS dwd_coupon_get(\n" +
+            "    id STRING,\n" +
+            "    coupon_id STRING,\n" +
+            "    user_id STRING,\n" +
+            "    get_time STRING,\n" +
+            "    ts STRING\n" +
+            ")" + MyKafkaUtil.getFlinkKafkaSinkDdl(targetTopic);
+        tableEnv.executeSql(createSql);
+
+        // todo 4.将数据写出
+        tableEnv.executeSql("insert into dwd_coupon_get select * from result_table");
+
+    }
+}
