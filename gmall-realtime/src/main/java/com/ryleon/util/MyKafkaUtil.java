@@ -57,6 +57,7 @@ public class MyKafkaUtil {
             "  `type` STRING,\n" +
             "  `data` MAP<STRING,STRING>,\n" +
             "  `old` MAP<STRING,STRING>,\n" +
+            "  `ts` STRING,\n" +
             "  pt AS PROCTIME()\n" +
             ")" + getFlinkKafkaDdl(topic, groupId);
     }
