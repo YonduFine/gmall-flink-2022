@@ -3,7 +3,6 @@ package com.ryleon.app.dws;
 import cn.hutool.core.util.StrUtil;
 import com.ryleon.app.func.DwsSplitFunction;
 import com.ryleon.bean.KeywordBean;
-import com.ryleon.common.GmallConfig;
 import com.ryleon.common.GmallConstant;
 import com.ryleon.util.ClickhouseUtil;
 import com.ryleon.util.MyKafkaUtil;
