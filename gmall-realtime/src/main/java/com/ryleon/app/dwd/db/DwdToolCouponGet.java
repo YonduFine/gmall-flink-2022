@@ -1,6 +1,5 @@
 package com.ryleon.app.dwd.db;
 
-import cn.hutool.core.util.StrUtil;
 import com.ryleon.app.base.BaseDwdFlinkApp;
 import com.ryleon.util.MyKafkaUtil;
 import com.ryleon.util.PropertiesUtil;

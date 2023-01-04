@@ -84,3 +84,16 @@ create table if not exists gmall_2212.dws_trade_cart_add_uu_window
 ) engine = ReplacingMergeTree(ts)
       partition by toYYYYMMDD(stt)
       order by (stt, edt);
+
+-- 7.交易域支付各窗口汇总表--统计支付成功独立用户数和首次支付成功用户数
+drop table if exists gmall_2212.dws_trade_payment_suc_window;
+create table if not exists gmall_2212.dws_trade_payment_suc_window
+(
+    stt                           DateTime,
+    edt                           DateTime,
+    payment_suc_unique_user_count UInt64,
+    payment_new_user_count        UInt64,
+    ts                            UInt64
+) engine = ReplacingMergeTree(ts)
+      partition by toYYYYMMDD(stt)
+      order by (stt, edt);

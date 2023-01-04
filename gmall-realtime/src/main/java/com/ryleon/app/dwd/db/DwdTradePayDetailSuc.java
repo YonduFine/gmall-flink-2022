@@ -16,9 +16,9 @@ import java.util.Properties;
  * @effect 交易域支付成功事务事实表
  *
  * <p>
- * 数据：web/app->Ngnix->Mysql->Maxwell->Kafka(ODS)->FlinkApp->Kafka(DWD_pay_detail_suc)
+ * 数据：web/app->Ngnix->Mysql->Maxwell->Kafka(ODS)->FlinkApp->Kafka(DWD)->FlinkApp->kafka(dwd)->FlinkApp->kafka(dwd)
  * <p>
- * 程序：mock->Maxwell->Kafka(ZK)->DwdTradePayDetailSuc->Kafka(ZK)
+ * 程序：mock->Maxwell->Kafka(ZK)->DwdTradeOrderPreProcess->Kafka->DwdTradeOrderDetail->Kafka()->DwdTradePayDetailSuc->Kafka(ZK)
  */
 public class DwdTradePayDetailSuc extends BaseDwdFlinkApp {
 
@@ -29,7 +29,7 @@ public class DwdTradePayDetailSuc extends BaseDwdFlinkApp {
 
     @Override
     public void startEnv(StreamExecutionEnvironment env, String appName) throws Exception {
-        // env.execute(appName);
+        env.execute(appName);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class DwdTradePayDetailSuc extends BaseDwdFlinkApp {
 
         // todo 5.关联表
         String resultSql = "SELECT\n" +
-            "    od.id,\n" +
+            "    od.id order_detail_id,\n" +
             "    od.order_id,\n" +
             "    od.user_id,\n" +
             "    od.sku_id,\n" +
@@ -104,20 +104,20 @@ public class DwdTradePayDetailSuc extends BaseDwdFlinkApp {
             "    od.split_activity_amount,\n" +
             "    od.split_coupon_amount,\n" +
             "    od.split_total_amount,\n" +
-            "    od.row_op_ts\n" +
-            "FROM payment_info pi\n" +
-            "LEFT JOIN dwd_order_detail od\n" +
-            "ON pi.order_id=od.order_id\n" +
-            "JOIN base_dic FOR SYSTEM_TIME AS OF pi.pt AS dic\n" +
+            "    od.row_op_ts \n" +
+            "FROM payment_info pi \n" +
+            "LEFT JOIN dwd_order_detail od \n" +
+            "ON pi.order_id=od.order_id \n" +
+            "JOIN base_dic FOR SYSTEM_TIME AS OF pi.pt AS dic \n" +
             "ON pi.payment_type=dic.dic_code";
         Table payDetailSuc = tableEnv.sqlQuery(resultSql);
         tableEnv.createTemporaryView("result_table",payDetailSuc);
-        // tableEnv.sqlQuery("select * from result_table").execute().print();
+        tableEnv.sqlQuery("select * from result_table").execute().print();
 
         // todo 6.创建upsert-kafka dwd_trade_pay_detail_suc表
         String targetTopic = properties.getProperty("dwd.kafka.trade_pay_detail_suc.topic");
-        String createSql = "CREATE TABLE IF NOT EXISTS dwd_pay_detail_suc(\n" +
-            "    id STRING,\n" +
+        String createSql = "CREATE TABLE dwd_pay_detail_suc(\n" +
+            "    order_detail_id STRING,\n" +
             "    order_id STRING,\n" +
             "    user_id STRING,\n" +
             "    sku_id STRING,\n" +
@@ -139,7 +139,7 @@ public class DwdTradePayDetailSuc extends BaseDwdFlinkApp {
             "    split_coupon_amount STRING,\n" +
             "    split_total_amount STRING,\n" +
             "    row_op_ts TIMESTAMP_LTZ(3),\n" +
-            "    PRIMARY KEY (id) NOT ENFORCED\n" +
+            "    PRIMARY KEY (order_detail_id) NOT ENFORCED \n" +
             ")"+MyKafkaUtil.getFlinkKafkaUpsertSinkDdl(targetTopic);
         tableEnv.executeSql(createSql);
 
