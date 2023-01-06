@@ -183,6 +183,26 @@
             </exclusions>
         </dependency>
 
+        <!-- 谷歌用于字符串处理 可用于下划线驼峰之间互相转换-->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>31.1-jre</version>
+        </dependency>
+
+        <!-- 用于泛型对象赋值 -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.3</version>
+        </dependency>
+
+        <!-- Redis JavaAPI操作 -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>3.3.0</version>
+        </dependency>
     </dependencies>
 
     <build>
