@@ -3,6 +3,7 @@ package com.ryleon.app.func;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
 import com.alibaba.fastjson.JSONObject;
+import com.ryleon.util.DimUtil;
 import com.ryleon.util.PhoenixDSUtil;
 import com.ryleon.util.PhoenixUtil;
 import org.apache.flink.configuration.Configuration;
@@ -27,8 +28,16 @@ public class DimTableSinkFunction extends RichSinkFunction<JSONObject> {
         // 2.将数据写入Phoenix表
         String sinkTable = value.getString("sinkTable");
         JSONObject data = value.getJSONObject("data");
+
+        // 3.1若是更新，删除redis中的数据
+        String type = value.getString("type");
+        String updateStr = "update";
+        if (updateStr.equals(type)) {
+            DimUtil.delDimInfo(sinkTable.toUpperCase(), data.getString("id"));
+        }
+        // 3.2写出数据
         PhoenixUtil.upsertValue(connection, sinkTable, data);
-        // 3.释放连接
+        // 4.释放连接
         connection.close();
     }
 }
