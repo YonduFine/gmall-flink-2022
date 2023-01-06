@@ -29,4 +29,9 @@ public class GmallConfig {
      */
     public static final String CLICKHOUSE_URL = "jdbc:clickhouse://bigdata101:8123/gmall_2212";
 
+    /**
+     * Redis主机地址
+     */
+    public static final String REDIS_HOST = "bigdata101";
+
 }
